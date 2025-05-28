@@ -1,9 +1,9 @@
-function saveB0Maps(B0maps, minValue, maxValue, figName, finalDir, config)
+function saveB0Maps(B0maps, minValue, maxValue, figName, config)
 finalDirToSave = config.dirToSave;
 if ~exist(finalDirToSave, 'dir')
     mkdir(finalDirToSave);
 end
-filePath = fullfile(finalDirToSave, 'images', finalDir);
+filePath = fullfile(finalDirToSave, 'Quantitative_maps');
 if ~exist(filePath, 'dir')
     mkdir(filePath);
 end

@@ -23,7 +23,5 @@ else
     end
 end
 prepImgs = flipud(prepImgs);
-% prepImgs = abs(prepImgs);
 prepImgs = squeeze(prepImgs);
-% prepImgs = rearrangeCartesianMaps(prepImgs); % since they were acquired in interleaved fashion
 end

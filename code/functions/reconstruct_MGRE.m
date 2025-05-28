@@ -14,11 +14,5 @@ iter = 5;
 images_GRE_abs = abs(imagesMGRE);
 images_GRE_abs_norm = normalizeArray(images_GRE_abs);
 [M0MGRE, T2starMGRE, R2starMGRE, ~] = performMobafitEPI(images_GRE_abs_norm(:,:,:,:,:,1:end,:), TEsMGRE(:,:,:,:,:,1:end), iter);
-T2starMGRE(T2starMGRE < 0) = 2000;
 [M0MGRE, R2starMGRE, T2starMGRE, imagesMGRE] = prepareMSEdata(M0MGRE, R2starMGRE, T2starMGRE, imagesMGRE, binaryMaskRARE, protParaMGRE);
-% M0MGRE = rearrangeCartesianMaps(M0MGRE);
-% R2starMGRE = rearrangeCartesianMaps(R2starMGRE);
-% T2starMGRE = rearrangeCartesianMaps(T2starMGRE);
-% imagesMGRE = rearrangeCartesianMaps(imagesMGRE);
-
 end

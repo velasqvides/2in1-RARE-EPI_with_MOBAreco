@@ -18,8 +18,6 @@ filePath = fullfile(finalDirToSave, 'sensRARE');
 writecfl(filePath, sensRARE);
 filePath = fullfile(finalDirToSave, 'synthesizedT2');
 writecfl(filePath, synthesizedT2);
-% filePath = fullfile(finalDirToSave, 'imagesRARE');
-% writecfl(filePath, imagesRARE);
 filePath = fullfile(finalDirToSave, 'protPara');
 save(filePath,'protPara');
 end

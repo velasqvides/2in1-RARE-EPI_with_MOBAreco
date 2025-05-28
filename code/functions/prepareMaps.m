@@ -10,6 +10,5 @@ else
 end
 prepMaps = flipud(prepMaps);
 prepMaps = squeeze(prepMaps);
-% prepMaps = rearrangeCartesianMaps(prepMaps);
 end
 

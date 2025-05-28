@@ -9,7 +9,5 @@ else
     prepImgs = imgs .* binaryMaskRARE;
 end
 prepImgs = flipud(prepImgs);
-% prepImgs = abs(prepImgs);
 prepImgs = squeeze(prepImgs);
-% prepImgs = rearrangeCartesianMaps(prepImgs);
 end

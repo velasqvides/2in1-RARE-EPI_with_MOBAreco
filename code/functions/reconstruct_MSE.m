@@ -11,20 +11,12 @@ else
 end
 order = generateReorderingSequence(size(imagesMSE,7));
 imagesMSE = imagesMSE(:,:,:,:,:,:,order);
-if contains(fileName, 'MID00034')
+if contains(fileName, 'MID00034') % special case
     imagesMSE = imagesMSE(:,:,:,:,:,:,2:end-1);
 end
-% as(imagesMSE)
 iter = 5;
-images_SE_abs = abs(imagesMSE); % in case images are reconstructed with phase perservation methods like pics
+images_SE_abs = abs(imagesMSE); 
 images_SE_abs_norm = normalizeArray(images_SE_abs);
 [M0MSE, R2MSE, T2MSE] = performMobafitRARE(images_SE_abs_norm(:,:,:,:,:,2:end,:), TEsMSE(:,:,:,:,:,2:end), iter);
-T2MSE(T2MSE < 0) = 2000;
-% M0MSE = rearrangeCartesianMaps(M0MSE);
-% R2MSE = rearrangeCartesianMaps(R2MSE);
-% T2MSE = rearrangeCartesianMaps(T2MSE);
-% imagesMSE = rearrangeCartesianMaps(imagesMSE);
 [M0MSE, R2MSE, T2MSE, imagesMSE] = prepareMSEdata(M0MSE, R2MSE, T2MSE,imagesMSE,  binaryMaskRARE, protParaMSE);
-
-
 end

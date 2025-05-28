@@ -10,7 +10,7 @@ kSpace                         = reshapeCartesianKspace(kSpace);
 
 TEs                            = createArrayTEs_cartesian(protPara); % in s
 
-kSpace                         = performCoilCompression(kSpace, nVirtualCoils);
+kSpace                         = bart(sprintf('cc -p%i -A -S',nVirtualCoils),kSpace);
 
 
 protPara.isOversamplingRemoved = isOversamplingRemoved;

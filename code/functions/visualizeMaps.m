@@ -1,15 +1,24 @@
-function visualizeMaps(maps,maxValue)
-if size(maps,3) > 1
-    maps(~isfinite(maps)) = 2000;
+function visualizeMaps(maps, maxValue, stringName)
+
+loLev = 0.0;
+upLev = maxValue;
+nSlices = size(maps, 3);
+imClip = zeros(size(maps, 1),size(maps, 2),size(maps, 3));
+for i = 1:nSlices
+[imClip(:,:,i), rgb_vec] = relaxationColorMap(stringName, maps(:,:,i), loLev, upLev);
+end
+if size(imClip,3) > 1
+    imClip(~isfinite(imClip)) = 2000;
     figure,
-    sliceViewer(maps, 'DisplayRange', [0,maxValue]);
+    sliceViewer(imClip, 'DisplayRange', [0,maxValue]);
+    colormap(rgb_vec);
     axis image; 
     axis off;
-    colormap('parula');
     colorbar;
 else
     figure, 
-    imagesc(maps,[0 maxValue]);
+    imagesc(imClip,[0 maxValue]);
+    colormap(rgb_vec);
     axis image;
     axis off;
 end

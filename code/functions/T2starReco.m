@@ -1,112 +1,64 @@
-function [T2starOut, B0out] = T2starReco(kSpace, traj, TEs, protPara, binaryMaskOut, R2out,config)
+function [M0starMaps, R2starMaps, T2starMaps, coilSensEPI, synthesizedEPIimages, B0maps] = T2starReco(kSpace, traj, TEs, initMaps, protPara)
 
 oversamplingFactor = protPara.oversamplingFactor;
 baseRes = protPara.baseRes;
-nSamples = oversamplingFactor * baseRes;
-nChannels = protPara.nChannels;
-ETL_EPI = protPara.ETL_EPI;
-nSlices = protPara.nSlices; 
+nSlices = size(kSpace,7);
 
-%% 4. compute init (3-point water/fat separation)
-mobaOversampling = 1.0;
-recoSize = baseRes*oversamplingFactor*mobaOversampling; % not sure yet why the factor of 2
-% % R_m0_1feOut = zeros(recoSize,recoSize,1,1,1,1,3,nSlices);
-% R_M1_init_Fout =zeros(recoSize,recoSize,1,1,1,1,3,nSlices);
-% recoEPIout = zeros(recoSize,recoSize,1,1,1,1,3,nSlices);
-% sensEPIout = zeros(recoSize,recoSize,1,size(kSpace,4),nSlices);
-% waterOut = zeros(baseRes,baseRes,nSlices);
-% B0out = zeros(baseRes,baseRes,nSlices);
-% R2starOut = zeros(baseRes,baseRes,nSlices);
-% T2starOut = zeros(baseRes,baseRes,nSlices);
-% synthesizedT2starImagesOut = zeros(baseRes,baseRes,1,1,1,size(kSpace,6),nSlices);
-for slice = 1:1
-    TE_e = bart('extract 5 0 3',TEs);
-    traj_1fe = bart('extract 5 0 3',traj);
-    kdat_1fe = bart('extract 5 0 3',kSpace);
-    R_m0_1fe = bart(sprintf('moba  -O -G -m0 -i6 -o%4.2f --fat_spec_0 -R2 -t',mobaOversampling),traj_1fe, kdat_1fe(:,:,:,:,:,:,slice), TE_e);
-%     R_m0_1feOut(:,:,1,1,1,1,:,slice) = R_m0_1fe;
-% 
-    initB0 = bart('extract 6 2 3',R_m0_1fe);
-    initR2star = R2out(:,:,slice);
-%     % scale by 0.01 so the inverse will be miliseconds, scale by 1.6 for
-%     % faster decay
-    toPad = (recoSize - baseRes)/2;
-    initR2star = initR2star.*0.01.*2;
-    initR2star = padarray(initR2star,[toPad toPad]);
-%     initW = lastRAREimageOut(:,:,slice).*1000/2;
-%     toPad = (recoSize - baseRes)/2;
-    initW = bart('extract 6 0 1',R_m0_1fe);
-    %initW = initM0s.*1000/2;
-%     initR2star=zeros(448,448,1);
-    R_M1_init_F = bart('join 6',initW, initR2star, initB0);
-%     R_M1_init_Fout(:,:,:,:,:,:,:,slice) = R_M1_init_F; 
-end
+mobaOS = protPara.T2StarMobaPara.mobaOversampling;
+recoSize = baseRes*oversamplingFactor*mobaOS; 
+recoT2starMoba = zeros(recoSize,recoSize,1,1,1,1,3,nSlices);
+coilSensEPI = zeros(recoSize,recoSize,1,size(kSpace,4),nSlices);
+M0starMaps = zeros(recoSize,recoSize,nSlices);
+B0maps = zeros(recoSize,recoSize,nSlices);
+R2starMaps = zeros(recoSize,recoSize,nSlices);
+T2starMaps = zeros(recoSize,recoSize,nSlices);
+synthesizedEPIimages = zeros(recoSize,recoSize,1,1,1,size(kSpace,6),nSlices);
+binaryMasksEPI = zeros(recoSize,recoSize,nSlices);
 
-%% 5. moba reconstruction: multi-echo R2* mapping
-for slice = 1:1
-    % moba reconstruction: multi-echo R2* mapping
-    writecfl('init_file',R_M1_init_F(:,:,:,:,:,:,:,1));
-    [recoEPI, sensEPI] = ...
+regW = protPara.T2StarMobaPara.regW;
+regT = protPara.T2StarMobaPara.regT;
+u = protPara.T2StarMobaPara.u;
+nIterMoba = protPara.T2StarMobaPara.nIterMoba;
+nInnerIterMoba = protPara.T2StarMobaPara.nInnerIterMoba;
+ReductionFactor = protPara.T2StarMobaPara.ReductionFactor;
+B0smoothLevel = protPara.T2StarMobaPara.B0smoothLevel;
+B0scaling = protPara.T2StarMobaPara.B0scaling;
+sensSmoothLevel = protPara.T2StarMobaPara.sensSmoothLevel;
+sensScaling = protPara.T2StarMobaPara.sensScaling;
+
+changeBartVersion(7)
+for slice = 1:nSlices
+    writecfl('init_file',initMaps(:,:,:,:,:,:,1:3,slice));
+    [reco, sens] = ...
         bart(...
         sprintf...
-        ('moba -G -m3 -rQ:1 -rS:0 -rW:3:64:1 -rT:3:64:1 -u0.00001 -o%4.2f  -k --kfilter-2 -i5 -C200 -R2 -d4 -I init_file -t',mobaOversampling),...
-        traj, kSpace(:,:,:,:,:,:,slice), TEs);
-    recoEPIout(:,:,:,:,:,:,:,slice) = recoEPI;
-    sensEPIout(:,:,:,:,slice) = sensEPI;
+        ('moba -G -m3 -g -rQ:1 -rS:0 -rW:3:64:%f -rT:3:64:%f -u%f -o%f -k --kfilter-2 -i%i -C%i -R%f  -d4 -b%f:%f --sobolev_a %f --sobolev_b %f -I init_file -t',...
+        regW, regT, u, mobaOS, nIterMoba, nInnerIterMoba, ReductionFactor, B0smoothLevel, B0scaling, sensSmoothLevel, sensScaling),...
+        traj(:,:,:,:,:,:,slice), kSpace(:,:,:,:,:,:,slice), TEs);
+    reco = bart(sprintf('resize -c 0 %i 1 %i', recoSize, recoSize), reco);
+    sens = bart(sprintf('resize -c 0 %i 1 %i', recoSize, recoSize), sens);
+    recoT2starMoba(:,:,:,:,:,:,:,slice) = reco;
+    coilSensEPI(:,:,:,:,slice) = sens;
+    tmp_maps = squeeze(reco);
+    M0 = tmp_maps(:,:,1);
+    mask = createBinaryMask(sens, M0, recoSize);
+    binaryMasksEPI(:,:,slice) = mask;
     cmd1 = sprintf('rm init_file*cfl init_file*hdr');
     system(cmd1);
-    %
-    tmpMpas = bart(sprintf('resize -c 0 %i 1 %i',baseRes,baseRes),recoEPI);
-    water = bart('slice 6 0',tmpMpas);
-    R2star = bart('slice 6 1',tmpMpas);
-    B0 = bart('slice 6 2',tmpMpas);
-
-    binaryMask = binaryMaskOut(:,:,slice);
-
-    water = binaryMask .* water;
-    waterOut(:,:,slice) = water;
-    B0 = binaryMask .* B0;
-    B0out(:,:,slice) = B0;
+    R2star = tmp_maps(:,:,2);
+    B0 = tmp_maps(:,:,3);
+    M0starMaps(:,:,slice) = M0;
+    B0maps(:,:,slice) = B0;
     T2star = 1./R2star;
-    R2star = binaryMask .* R2star;
-    R2starOut(:,:,slice) = R2star;
-    T2star = binaryMask .* T2star;
+    R2starMaps(:,:,slice) = R2star;
     T2star = bart('scale 1000',T2star);
-    % T2star(isinf(T2star)) = 0;
-    % T2star(T2star < 0) = 0;
-    T2starOut(:,:,slice) = T2star;
-
-    % Create synthesized T2-weighted images
+    T2starMaps(:,:,slice) = T2star;
     tmp_result = TEs .* R2star./1000;
     tmp_result1 = bart('scale 1',tmp_result);
     tmp_result = bart('scale  -- -1.0',tmp_result1);
     tmp_exp = bart('zexp',tmp_result);
-    synthesizedT2starImages = tmp_exp .* water;
-    synthesizedT2starImages = ...
-        bart(sprintf('resize -c 0 %i 1 %i',baseRes,baseRes),synthesizedT2starImages);
-    synthesizedT2starImagesOut(:,:,:,:,:,:,slice) = synthesizedT2starImages;
-
-end % end for loop
-
-%% 10. Save the reco data
-
-dirToSave = config.dirToSave;
-timeStamp = strrep(strrep(datestr(now),' ','_'),':','-');
-finalDirToSave = fullfile(dirToSave,'postprocessed_data','T2star',timeStamp);
-mkdir(finalDirToSave);
-filePath = fullfile(finalDirToSave,'recoEPIout');
-writecfl(filePath,recoEPIout);
-filePath = fullfile(finalDirToSave,'sensEPIout');
-writecfl(filePath,sensEPIout);
-filePath = fullfile(finalDirToSave,'T2starOut');
-writecfl(filePath,T2starOut);
-filePath = fullfile(finalDirToSave,'R2starOut');
-writecfl(filePath,R2starOut);
-filePath = fullfile(finalDirToSave,'waterOut');
-writecfl(filePath,waterOut);
-filePath = fullfile(finalDirToSave,'B0out');
-writecfl(filePath,B0out);
-filePath = fullfile(finalDirToSave,'synthesizedT2starImagesOut');
-writecfl(filePath,synthesizedT2starImagesOut);
-figure, imagesc(flipud(T2starOut), [0 125]);axis equal; axis off; title T2map
-end %end function
+    synthesizedImages = tmp_exp .* M0;
+    synthesizedEPIimages(:,:,:,:,:,:,slice) = synthesizedImages;
+end 
+changeBartVersion(9)
+end
