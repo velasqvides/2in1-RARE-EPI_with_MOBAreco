@@ -2,6 +2,7 @@ folderWitRawData = 'phantom_quantitative_analysis';
 mainFolder = fileparts(mfilename('fullpath'));
 cd(fullfile(mainFolder, '../../raw_data',folderWitRawData));
 originalFolderPath = pwd;
+% cd(fullfile('../../raw_data',folderWitRawData));
 load('ROIcenters.mat')
 cd(originalFolderPath);
 filePaths = obtainFilePaths(folderWitRawData);
@@ -17,9 +18,9 @@ for meas = 1:numIter
         [kSpaceRARE, kSpaceEPI,  trajRARE, trajEPI, TEsRARE, TEsEPI, protPara, config] = ...
             preProcessRawData(folderWitRawData, fileName, isOversamplingRemoved, applyNoiseDecorrelation, nVirtualCoils);
         imagesRARE = ReconstructImageGridding(kSpaceRARE(:,:,:,:,:,2:end,:), trajRARE(:,:,:,:,:,2:end,:)); 
-        as(squeeze(imagesRARE));
+        figure, sliceViewer(squeeze(imagesRARE));
         imagesEPI  = ReconstructImageGridding(kSpaceEPI(:,:,:,:,:,1:end,:), trajEPI(:,:,:,:,:,1:end,:));   
-        as(squeeze(imagesEPI));
+        figure, sliceViewer(squeeze(imagesEPI));
         % T2 mapping
         protPara.T2MobaPara.mobaOversampling = 1;
         protPara.T2MobaPara.nIterMoba = 10;
@@ -33,6 +34,7 @@ for meas = 1:numIter
         [T2, R2, M0, sensRARE, synthesizedRAREimages, binaryMaskRARE] = ...
             prepareRAREdata(T2_, R2_, M0_, binaryMaskRARE_, sensRARE_, synthesizedRAREimages_,  protPara);
         visualizeMaps(T2,175,'T2');
+
         % T2star mapping
         protPara.T2StarMobaPara.regW = 1;
         protPara.T2StarMobaPara.regT = 1;
@@ -69,7 +71,10 @@ for meas = 1:numIter
         isOversamplingRemoved = 1;
         [T2starMGRE, R2starMGRE, M0MGRE, imagesMGRE, protParaMGRE, configMGRE] = reconstruct_MGRE(folderWitRawData, fileName, isOversamplingRemoved, applyNoiseDecorrelation, nVirtualCoils, binaryMaskRARE_);
         visualizeMaps(T2starMGRE,125,'T1');
-        
+        if saveOutput
+            
+            saveInPngMGRE(T2starMGRE, M0MGRE, configMGRE);
+        end
     else
         disp(['Skipping unknown file: ', fileName]);
     end
@@ -115,5 +120,4 @@ if saveInPng
     saveRAREinPng(T2, M0, config);
     saveEPIinPng(T2star, M0star, B0, initB0, binaryMaskRARE, config);
     saveInPngMSE(T2MSE, M0MSE, configMSE);
-    saveInPngMGRE(T2starMGRE, M0MGRE, configMGRE);
 end

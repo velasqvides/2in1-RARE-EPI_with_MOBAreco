@@ -8,7 +8,6 @@ maps = bart( sprintf( 'mobafit -T -i%i',iter ), TEs, img(:,:,:,:,:,:,i) );
 maps = squeeze(maps);
 mobaFitMaps(:,:,:,i) = maps;
 end
-% as(mobaFitMapsRARE)
 M0 = squeeze(mobaFitMaps(:,:,1,:));
 R2 = squeeze(mobaFitMaps(:,:,2,:));
 T2 = 1./R2;

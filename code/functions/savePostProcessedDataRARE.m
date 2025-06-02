@@ -1,4 +1,4 @@
-function savePostProcessedDataRARE(T2, R2, M0, binaryMaskRARE, sensRARE, synthesizedT2, protPara, config)
+function savePostProcessedDataRARE(T2, R2, M0, sensRARE, synthesizedT2, protPara, config)
 dirToSave = config.dirToSave;
 % timeStamp = datetime('now', 'Format', 'dd-MMM-yyyy_HH');
 % timeStamp = char(timeStamp);
@@ -12,8 +12,6 @@ filePath = fullfile(finalDirToSave,'R2');
 writecfl(filePath, R2);
 filePath = fullfile(finalDirToSave, 'M0');
 writecfl(filePath, M0);
-filePath = fullfile(finalDirToSave, 'binaryMaskRARE');
-writecfl(filePath, binaryMaskRARE);
 filePath = fullfile(finalDirToSave, 'sensRARE');
 writecfl(filePath, sensRARE);
 filePath = fullfile(finalDirToSave, 'synthesizedT2');

@@ -1,5 +1,4 @@
 function savePostProcessedDataCartesianMGRE(T2, R2, M0, img, protPara, config)
-% I am saving them individually to be able to read them easily with the readcfl function included in BART 
 dirToSave = config.dirToSave;
 % timeStamp = datetime('now', 'Format', 'dd-MMM-yyyy_HH');
 % timeStamp = char(timeStamp);

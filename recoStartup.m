@@ -12,6 +12,12 @@ addpath(genpath(mapVBVDPath));
 colorResourcesPath = fullfile(mainFolder, 'open_source_tools', 'mfuderer-colorResources-37639c3');
 addpath(genpath(colorResourcesPath));
 
+arrShowPath = fullfile(mainFolder, 'open_source_tools', 'arrShow');
+addpath(arrShowPath);               
+originalDir = pwd;
+cd(arrShowPath);
+arrShow.registerPaths();
+cd(originalDir);           
 
 clearvars;
 
