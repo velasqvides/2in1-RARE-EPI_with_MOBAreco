@@ -9,4 +9,6 @@
 # others
 *.seq
 *.png
+!open_source_tools/arrShow/icons/
+!open_source_tools/arrShow/icons/*.png
 
